@@ -1,0 +1,141 @@
+---
+title: "Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(data.table)
+library(ggplot2)
+
+# read final data
+data_injection <- fread('../../gen/analysis/temp/preclean.csv')
+data_WH_briefing <- fread('../../gen/analysis/temp/preclean2.csv')
+
+```
+
+## Content of this file:
+
+In this file you will find different barplots and histograms we used to do our sentiment analyses, based on two datasets, containing tweets about president Trump. The first dataset (1) was created after he gave his speech on 24-04-2020 about the injection of disinfectants. The tweets in the second dataset (2) were collected during a white house press briefing on April 27-04-2020 by the coronavirus task force and the US president, Donald J Trump.
+
+
+### abbreviations
+Comp = Compound,
+Inj = Dataset 1,
+Pol = Polarity,
+Prof = profanity and is true if there is a swear word
+inside the text of the tweet and false if there is not.,
+WH = Dataset 2 
+
+
+
+### Summary statistics
+
+```{r}
+n= nrow(data_injection)
+n2 = nrow(data_WH_briefing)
+```
+
+### Plot 
+
+```{r}
+ggplot(data = data_injection, aes(x = factor(pos)))+
+  geom_bar(fill = (values= c("blue", "red")), aes(y = ..count../ n), stat = "count") +
+  geom_text(aes( label = scales::percent(..count../n),
+                 y= ..count../n), stat= "count", vjust = -.1) +geom_bar(fill = (values= c("blue", "red")), aes(y = (..count..)/sum(..count..))) +
+  theme_classic()+
+  ggtitle("Percentage negative vs positive tweets\n after injecting suggestion")+
+  scale_x_discrete(limits = c("0", "1"), 
+                   labels = c('Negative', 'Positive'))+
+  xlab("")+
+  ylab("Percentage")
+
+
+ggplot(data = data_WH_briefing, aes(x = factor(pos)))+
+  geom_bar(fill = (values= c("blue", "red")), aes(y = ..count../ n2), stat = "count") +
+  geom_text(aes( label = scales::percent(..count../n2),
+                 y= ..count../n2), stat= "count", vjust = -.1) +geom_bar(fill = (values= c("blue", "red")), aes(y = (..count..)/sum(..count..))) +
+  theme_classic()+
+  ggtitle("Percentage negative vs positive tweets\n after WH briefing")+
+  scale_x_discrete(limits = c("0", "1"), 
+                   labels = c('Negative', 'Positive'))+
+  xlab("")+
+  ylab("Percentage")
+
+
+polarity_set <- subset(data_injection, !polarity == 0)
+
+ggplot(data = polarity_set, aes(x = polarity))+
+  geom_histogram(fill = "red2", bins = 7, aes(y = (..count..)/sum(..count..)) ) +
+  theme_classic()+
+  ggtitle("Polarity after injection suggestion")+
+  xlab("Polarity")+
+  ylab("Percentage")
+
+
+polarity_set2 <- subset(data_WH_briefing, !polarity == 0)
+
+ggplot(data = polarity_set2, aes(x = polarity))+
+  geom_histogram(fill = "blue2", bins = 7, aes(y = (..count..)/sum(..count..)) ) +
+  theme_classic()+
+  ggtitle("Polarity after WH briefing")+
+  xlab("Polarity")+
+  ylab("Percentage")
+
+
+ggplot(data = data_injection, aes(x = compound))+
+  geom_histogram( fill = "red2", bins = 7, aes(y = (..count..)/sum(..count..)) ) +
+  theme_classic()+
+  ggtitle("Compound after injection suggestion")+
+  xlab("Compound")+
+  ylab("Percentage")
+
+
+ggplot(data = data_WH_briefing, aes(x = compound))+
+  geom_histogram(fill = "blue2", bins = 7, aes(y = (..count..)/sum(..count..)) ) +
+  theme_classic()+
+  ggtitle("Compound after WH briefing")+
+  xlab("Compound")+
+  ylab("Percentage")
+
+
+
+ggplot(data_injection, aes(x= profanity)) + 
+  geom_bar(fill = (values= c("blue", "red")), aes( y = ..count../ n), stat = "count") +
+  geom_text(aes( label = scales::percent(..count../n),
+                 y= ..count../n), stat= "count", vjust = -.1) +
+  labs(y = "") +
+  scale_y_continuous(labels = scales::percent)+
+  theme_classic()+
+  ggtitle("Profanity after injection suggestion")+
+  xlab("Profanity")
+
+
+
+ggplot(data_WH_briefing, aes(x= profanity)) + 
+  geom_bar(fill = (values= c("blue", "red")), aes(y = ..count../ n2), stat = "count") +
+  geom_text(aes( label = scales::percent(..count../n2),
+                 y= ..count../n2), stat= "count", vjust = -.1) +
+  labs(y = "") +
+  scale_y_continuous(labels = scales::percent)+
+  theme_classic()+
+  xlab("Profanity")+
+  ggtitle("Profanity after WH briefing")
+
+
+Sent_cols <- c('Comp_WH', 'Comp_inj', 'Pol_WH', 'Pol_inj')
+Sent_vals <- c(mean(data_WH_briefing$compound), mean(data_injection$compound), mean(data_WH_briefing$polarity), mean(data_injection$polarity))
+Sent_df <- data.frame(Sent_cols, Sent_vals)
+
+
+ggplot(Sent_df , aes(x= Sent_cols, y = Sent_vals)) + 
+  geom_bar( stat = "identity", fill = (values= c("blue", "red", "blue", 'red')))+
+  labs(y = "Mean value") +
+  theme_classic()+
+  ggtitle("Mean sentiment compound vs. polarity")+
+  geom_text(aes(label = round(Sent_vals,3)), vjust = c(.8, -.1, -.1,-.1))+
+  xlab("")
+
+```
+
